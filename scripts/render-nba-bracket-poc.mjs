@@ -197,12 +197,21 @@ const team = (series, prefix, winIndicatorPosition) => {
 
 const seriesRecords = (series) => {
   if (!series.isSet) return ["", ""];
-  if (series.lowSeedSeriesWins === series.highSeedSeriesWins) return ["Series", "tied"];
+  if (series.lowSeedSeriesWins === series.highSeedSeriesWins) {
+    return ["SERIES TIED", `${series.lowSeedSeriesWins}-${series.highSeedSeriesWins}`];
+  }
+  const statusText = series.seriesStatus === 3 ? "WINS" : "LEADS";
   const leader =
     series.lowSeedSeriesWins > series.highSeedSeriesWins ? series.lowSeedTricode : series.highSeedTricode;
-  const wins = Math.max(series.lowSeedSeriesWins || 0, series.highSeedSeriesWins || 0);
-  const losses = Math.min(series.lowSeedSeriesWins || 0, series.highSeedSeriesWins || 0);
-  return [leader, `leads ${wins}-${losses}`];
+  const leaderWins =
+    series.lowSeedSeriesWins > series.highSeedSeriesWins
+      ? series.lowSeedSeriesWins
+      : series.highSeedSeriesWins;
+  const trailingWins =
+    series.lowSeedSeriesWins > series.highSeedSeriesWins
+      ? series.highSeedSeriesWins
+      : series.lowSeedSeriesWins;
+  return [`${leader} ${statusText}`, `${leaderWins}-${trailingWins}`];
 };
 
 const formatNextGame = (series) => {
