@@ -15,4 +15,10 @@ npm ci
 npm run render:bracket
 ```
 
-The GitHub Pages workflow runs daily and publishes the generated `output/` directory. The Cloudflare Pages workflow also runs daily, but only deploys when `CLOUDFLARE_API_TOKEN` is set as a repository secret. The Cloudflare project is `nba-bracket-daily`.
+The GitHub Pages workflow runs daily at 1:30am ET through June 21, 2026 and publishes the generated `output/` directory. The Cloudflare Pages workflow uses the same schedule, but only deploys when `CLOUDFLARE_API_TOKEN` is set as a repository secret. The Cloudflare project is `nba-bracket-daily`.
+
+The Cloudflare token should allow Pages deployments for the account. Add it with:
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN --repo cboRD181/nba-bracket-daily
+```
