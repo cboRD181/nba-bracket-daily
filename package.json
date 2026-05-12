@@ -1,0 +1,16 @@
+{
+  "name": "https-www-nba-com-playoffs-2026",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "render:bracket": "node scripts/render-nba-bracket-poc.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

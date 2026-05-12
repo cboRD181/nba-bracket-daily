@@ -1,0 +1,29 @@
+name: Render and publish bracket to Cloudflare Pages
+
+on:
+  schedule:
+    - cron: "20 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  render-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 85ea97f88c3f07c9608d68544c0d69e3
+      CLOUDFLARE_PROJECT_NAME: nba-bracket-daily
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run render:bracket
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        run: npx wrangler pages deploy output --project-name "$CLOUDFLARE_PROJECT_NAME" --branch main
+      - name: Explain skipped Cloudflare deploy
+        if: ${{ env.CLOUDFLARE_API_TOKEN == '' }}
+        run: |
+          echo "Skipped Cloudflare Pages deploy because CLOUDFLARE_API_TOKEN is not set as a repository secret."
