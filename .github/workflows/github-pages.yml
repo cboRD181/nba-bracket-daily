@@ -34,6 +34,13 @@ jobs:
             exit 0
           fi
 
+          et_date="$(TZ=America/New_York date +%Y-%m-%d)"
+          if [[ "$et_date" > "2026-06-21" ]]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping because $et_date is after 2026-06-21."
+            exit 0
+          fi
+
           et_hour="$(TZ=America/New_York date +%H)"
           if [ "$et_hour" = "01" ]; then
             echo "should_run=true" >> "$GITHUB_OUTPUT"
