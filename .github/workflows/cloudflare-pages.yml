@@ -2,28 +2,50 @@ name: Render and publish bracket to Cloudflare Pages
 
 on:
   schedule:
-    - cron: "20 12 * * *"
+    - cron: "30 5 * * *"
+    - cron: "30 6 * * *"
   workflow_dispatch:
 
 jobs:
   render-and-deploy:
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: 85ea97f88c3f07c9608d68544c0d69e3
       CLOUDFLARE_PROJECT_NAME: nba-bracket-daily
     steps:
+      - id: schedule-gate
+        name: Run only at 1:30am ET
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          et_hour="$(TZ=America/New_York date +%H)"
+          if [ "$et_hour" = "01" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping because current ET hour is $et_hour, not 01."
+          fi
       - uses: actions/checkout@v4
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - uses: actions/setup-node@v4
+        if: steps.schedule-gate.outputs.should_run == 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - run: npm run render:bracket
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - name: Deploy to Cloudflare Pages
-        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        if: ${{ steps.schedule-gate.outputs.should_run == 'true' && env.CLOUDFLARE_API_TOKEN != '' }}
         run: npx wrangler pages deploy output --project-name "$CLOUDFLARE_PROJECT_NAME" --branch main
       - name: Explain skipped Cloudflare deploy
-        if: ${{ env.CLOUDFLARE_API_TOKEN == '' }}
+        if: ${{ steps.schedule-gate.outputs.should_run == 'true' && env.CLOUDFLARE_API_TOKEN == '' }}
         run: |
           echo "Skipped Cloudflare Pages deploy because CLOUDFLARE_API_TOKEN is not set as a repository secret."

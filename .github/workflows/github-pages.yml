@@ -2,7 +2,8 @@ name: Render and publish bracket to GitHub Pages
 
 on:
   schedule:
-    - cron: "15 12 * * *"
+    - cron: "30 5 * * *"
+    - cron: "30 6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,6 +15,9 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   render-and-deploy:
     runs-on: ubuntu-latest
@@ -21,16 +25,39 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - id: schedule-gate
+        name: Run only at 1:30am ET
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          et_hour="$(TZ=America/New_York date +%H)"
+          if [ "$et_hour" = "01" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping because current ET hour is $et_hour, not 01."
+          fi
       - uses: actions/checkout@v4
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - uses: actions/setup-node@v4
+        if: steps.schedule-gate.outputs.should_run == 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - run: npm run render:bracket
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - uses: actions/configure-pages@v5
+        if: steps.schedule-gate.outputs.should_run == 'true'
       - uses: actions/upload-pages-artifact@v3
+        if: steps.schedule-gate.outputs.should_run == 'true'
         with:
           path: output
       - id: deployment
+        if: steps.schedule-gate.outputs.should_run == 'true'
         uses: actions/deploy-pages@v4
