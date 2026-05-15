@@ -3,7 +3,6 @@ name: Render and publish bracket to Cloudflare Pages
 on:
   schedule:
     - cron: "30 5 * * *"
-    - cron: "30 6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -16,7 +15,7 @@ jobs:
       CLOUDFLARE_PROJECT_NAME: nba-bracket-daily
     steps:
       - id: schedule-gate
-        name: Run only at 1:30am ET
+        name: Stop scheduled runs after June 21
         shell: bash
         run: |
           if [ "${{ github.event_name }}" != "schedule" ]; then
@@ -31,13 +30,7 @@ jobs:
             exit 0
           fi
 
-          et_hour="$(TZ=America/New_York date +%H)"
-          if [ "$et_hour" = "01" ]; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping because current ET hour is $et_hour, not 01."
-          fi
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         if: steps.schedule-gate.outputs.should_run == 'true'
       - uses: actions/setup-node@v4
